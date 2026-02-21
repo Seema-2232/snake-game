@@ -24,4 +24,4 @@ Player 2: W A S D
 ## 📂 How to Run
 
 ```bash
-python main.py
+python snake.py
