@@ -72,15 +72,23 @@ def stop_music():
 # ================= SPAWN FUNCTIONS =================
 def spawn_food():
     global food
-    food = (random.randrange(0, WIDTH, SNAKE_SIZE),
-            random.randrange(80, HEIGHT, SNAKE_SIZE))
+    while True:
+        fx = random.randrange(0, WIDTH, SNAKE_SIZE)
+        fy = random.randrange(80, HEIGHT, SNAKE_SIZE)
+        if (fx, fy) not in snake1 and (fx, fy) not in snake2:
+            food = (fx, fy)
+            break
 
 def spawn_powerup():
     global power_up, power_type
     types = ["Speed", "Slow", "Double"]
     power_type = random.choice(types)
-    power_up = (random.randrange(0, WIDTH, SNAKE_SIZE),
-                random.randrange(80, HEIGHT, SNAKE_SIZE))
+    while True:
+        px = random.randrange(0, WIDTH, SNAKE_SIZE)
+        py = random.randrange(80, HEIGHT, SNAKE_SIZE)
+        if (px, py) not in snake1 and (px, py) not in snake2:
+            power_up = (px, py)
+            break
 
 # ================= DRAW FUNCTIONS =================
 def draw_grid():
@@ -166,7 +174,8 @@ def update_snake(snake, direction):
 
     new_head = (head_x, head_y)
 
-    if new_head in snake:
+    # Collision with self or other snake
+    if new_head in snake or (multiplayer and snake == snake1 and new_head in snake2) or (multiplayer and snake == snake2 and new_head in snake1):
         end_game()
         return snake
 
@@ -191,8 +200,13 @@ def check_collisions():
         score2 += 1
         spawn_food()
 
-    # Power-ups
+    # Power-ups for P1
     if power_up and snake1[0] == power_up:
+        apply_powerup()
+        power_up = None
+
+    # Power-ups for P2
+    if multiplayer and power_up and snake2[0] == power_up:
         apply_powerup()
         power_up = None
 
@@ -201,13 +215,13 @@ def apply_powerup():
 
     if power_type == "Speed":
         speed_modifier = -40
-        root.after(5000, lambda: reset_speed())
+        root.after(5000, reset_speed)
     elif power_type == "Slow":
         speed_modifier = 40
-        root.after(5000, lambda: reset_speed())
+        root.after(5000, reset_speed)
     elif power_type == "Double":
         double_points = True
-        root.after(5000, lambda: reset_double())
+        root.after(5000, reset_double)
 
 def reset_speed():
     global speed_modifier
@@ -227,11 +241,13 @@ def end_game():
 # ================= CONTROLS =================
 def key_control(event):
     global direction1, direction2
-    keys = event.keysym
+    keys = event.keysym.lower()
 
     # Player 1 arrows
-    if keys in ["Up","Down","Left","Right"]:
-        direction1 = keys
+    if keys == "up": direction1 = "Up"
+    if keys == "down": direction1 = "Down"
+    if keys == "left": direction1 = "Left"
+    if keys == "right": direction1 = "Right"
 
     # Player 2 WASD
     if multiplayer:
